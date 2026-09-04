@@ -100,7 +100,11 @@ class NitrogenTokenizer(Tokenizer):
     modular structure.
     """
 
-    def __init__(self, config: NitrogenTokenizerConfig):
+    def __init__(
+        self,
+        config: NitrogenTokenizerConfig,
+        game_mapping: dict[str | None, int] | None = None,
+    ):
         self.training = config.training
         self.num_visual_tokens_per_frame = config.num_visual_tokens_per_frame
         self.max_action_dim = config.max_action_dim
@@ -108,7 +112,9 @@ class NitrogenTokenizer(Tokenizer):
         self.action_horizon = config.action_horizon
         self.old_layout = config.old_layout
 
-        if config.game_mapping_cfg:
+        if game_mapping is not None:
+            self.game_mapping = game_mapping
+        elif config.game_mapping_cfg:
             self.game_mapping = get_game_mapping(config.game_mapping_cfg)
             with open("game_mapping.json", "w") as f:
                 import json
