@@ -1,6 +1,6 @@
-from dataclasses import dataclass, field
 from pydantic import BaseModel, Field
 from pathlib import Path
+from typing import Literal
 
 import yaml
 import numpy as np
@@ -175,13 +175,18 @@ class NitroGen(torch.nn.Module):
         self,
         config: NitroGen_Config,
         game_mapping: dict[str, int] | None = None, # Used to add a game ID token
+        vision_encoder: nn.Module | None = None,
+        vision_encoder_type: Literal["siglip", "hf_auto", "custom"] | None = None,
     ):
         super().__init__()
         self.config = config
         self.hidden_size = config.hidden_size
         self.vision_hidden_size = config.vision_hidden_size
 
-        if "siglip" in config.vision_encoder_name:
+        if vision_encoder is not None:
+            self.vision_encoder = vision_encoder
+            self.vision_encoder_type = vision_encoder_type or "custom"
+        elif "siglip" in config.vision_encoder_name:
             model = SiglipVisionModel.from_pretrained(config.vision_encoder_name)
             self.vision_encoder = model.vision_model
             self.vision_encoder_type = "siglip"
@@ -535,7 +540,7 @@ class NitroGen(torch.nn.Module):
             # state_features,
             action_features,
             data["dropped_images"],
-            game_ids=data.get("game_id"),
+            game_ids=data.get("game_ids"),
         )
 
         vl_embs = self.vl_self_attention_model(vl_embs)

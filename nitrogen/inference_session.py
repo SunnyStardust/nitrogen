@@ -9,6 +9,7 @@ from transformers import AutoImageProcessor
 from nitrogen.flow_matching_transformer.nitrogen import NitroGen, NitroGen_Config
 from nitrogen.mm_tokenizers import NitrogenTokenizerConfig, NitrogenTokenizer, Tokenizer
 from nitrogen.cfg import CkptConfig
+from nitrogen.finetuning.checkpoint import get_checkpoint_game_mapping
 from nitrogen.shared import PATH_REPO
 
 def summarize_parameters(module, name='model', depth=0, max_depth=3):
@@ -61,7 +62,10 @@ def load_model(checkpoint_path: str):
                 x.replace("/mnt/amlfs-02/shared/gaming/gamingvla", str(PATH_REPO))
                 for x in tokenizer_cfg.game_mapping_cfg.src_files
             ]
-        tokenizer = NitrogenTokenizer(tokenizer_cfg)
+        tokenizer = NitrogenTokenizer(
+            tokenizer_cfg,
+            game_mapping=get_checkpoint_game_mapping(checkpoint),
+        )
         game_mapping = tokenizer.game_mapping
         model = NitroGen(config=model_cfg, game_mapping=game_mapping)
         # model.num_inference_timesteps = 16

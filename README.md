@@ -52,6 +52,52 @@ python scripts/play.py --process '<game_executable_name>.exe'
 
 The `--process` parameter must be the exact executable name of the game you want to play. You can find it by right-clicking on the game process in Windows Task Manager (Ctrl+Shift+Esc), and selecting `Properties`. The process name should be in the `General` tab and end with `.exe`.
 
+# Fine-tuning
+
+Fine-tuning expects a JSON manifest of pre-windowed demonstrations:
+
+```json
+{
+  "samples": [{
+    "frames": ["frames/000001.png"],
+    "dropped_frames": [false],
+    "buttons": [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],
+    "j_left": [[0.0, 0.0]],
+    "j_right": [[0.0, 0.0]],
+    "game": null
+  }]
+}
+```
+
+Each action array must contain `action_horizon` rows. Button columns must follow
+`nitrogen.shared.BUTTON_ACTION_TOKENS`; joystick values must be in `[-1, 1]`.
+Frame paths are resolved relative to the manifest.
+
+```bash
+python scripts/finetune.py \
+  --checkpoint ng.pt \
+  --manifest demonstrations.json \
+  --output-dir runs/my-game \
+  --max-steps 1000
+```
+
+Verify the complete pipeline without a checkpoint or network access:
+
+```bash
+python scripts/finetune.py --fake-data --output-dir /tmp/nitrogen-smoke
+```
+
+The fake-data mode runs training, validation, checkpoint resume, and inference
+export with a tiny model. Set `NITROGEN_CHECKPOINT=/path/to/ng.pt` when running
+`python -m unittest tests.test_finetune` to additionally check released-checkpoint
+loading.
+
+Run it with:
+
+```bash
+python -m unittest tests.test_finetune
+```
+
 # Paper and Citation
 
 If you find our work useful, please consider citing us!
