@@ -42,6 +42,16 @@ class ManifestFineTuningDataset(Dataset):
             action_horizon == len(sample["j_left"]) == len(sample["j_right"])
         ):
             raise ValueError(f"Action lengths differ in sample {index}")
+        if any(len(buttons) != 21 for buttons in sample["buttons"]):
+            raise ValueError(f"Expected 21 buttons per timestep in sample {index}")
+        if any(len(stick) != 2 for stick in sample["j_left"] + sample["j_right"]):
+            raise ValueError(f"Expected two coordinates per joystick in sample {index}")
+        if not all(
+            -1 <= coordinate <= 1
+            for stick in sample["j_left"] + sample["j_right"]
+            for coordinate in stick
+        ):
+            raise ValueError(f"Joystick value outside [-1, 1] in sample {index}")
 
         dropped_frames = sample.get("dropped_frames", [False] * len(images))
         if len(dropped_frames) != len(images):

@@ -10,13 +10,25 @@ from nitrogen.flow_matching_transformer.nitrogen import NitroGen
 from nitrogen.mm_tokenizers import NitrogenTokenizer
 
 
+def get_checkpoint_game_mapping(checkpoint: dict) -> dict | None:
+    game_mapping = checkpoint.get("game_mapping")
+    if game_mapping is not None:
+        return game_mapping
+    game_weights = checkpoint["model"].get("game_embedding.weight")
+    if game_weights is None:
+        return None
+    return {None: 0, **{
+        f"__game_{index}": index for index in range(1, game_weights.shape[0])
+    }}
+
+
 def load_pretrained_components(
     checkpoint_path: str | Path,
     device: torch.device,
 ) -> tuple[NitroGen, NitrogenTokenizer, Any, CkptConfig, dict | None]:
     checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
     ckpt_config = CkptConfig.model_validate(checkpoint["ckpt_config"])
-    game_mapping = checkpoint.get("game_mapping")
+    game_mapping = get_checkpoint_game_mapping(checkpoint)
     tokenizer = NitrogenTokenizer(
         ckpt_config.tokenizer_cfg,
         game_mapping=game_mapping,
